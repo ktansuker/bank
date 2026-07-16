@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KT BANK</title>
+    <style>
+        body { background-color: #000; color: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 40px 16px; box-sizing: border-box; }
+        .container { background-color: #111; padding: 40px; width: 100%; max-width: 480px; border: 1px solid #333; box-shadow: 8px 8px 0px #fff; }
+        h1 { font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; margin-bottom: 30px; border-bottom: 2px solid #fff; padding-bottom: 10px; text-align: center;}
+        h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin: 25px 0 10px; border-top: 1px solid #222; padding-top: 15px;}
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; color: #aaa; }
+        input, select { width: 100%; padding: 12px; box-sizing: border-box; font-size: 16px; border: 1px solid #333; background: #000; color: #fff; outline: none; transition: 0.3s;}
+        input:focus, select:focus { border-color: #fff; }
+
+        button { width: 100%; padding: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.2s; background: #fff; color: #000; border: none; margin-top: 10px; }
+        button:hover { background: #ccc; }
+        button.outline { background: transparent; color: #fff; border: 2px solid #fff; }
+        button.outline:hover { background: #fff; color: #000; }
+        button.small { padding: 10px; font-size: 12px; }
+
+        #message { margin-top: 20px; font-weight: bold; text-align: center; min-height: 20px; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .hidden { display: none; }
+
+        table.balance-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
+        .balance-table th, .balance-table td { border: 1px solid #333; padding: 6px; text-align: left; }
+        .balance-table th { color: #aaa; text-transform: uppercase; font-size: 10px; }
+        .role-badge { font-size: 10px; padding: 2px 6px; border: 1px solid #fff; text-transform: uppercase; }
+        .scroll-table { max-height: 220px; overflow-y: auto; border: 1px solid #333; }
+        .type-in { color: #0f0; }
+        .type-out { color: #f66; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h1>KT BANK</h1>
+
+    <!-- GİRİŞ EKRANI -->
+    <div id="login-section">
+        <div class="form-group">
+            <label>Kullanıcı Adı</label>
+            <input type="text" id="username" placeholder="admin">
+        </div>
+        <div class="form-group">
+            <label>Parola</label>
+            <input type="password" id="password" placeholder="admin123">
+        </div>
+        <button onclick="login()">Sisteme Gir</button>
+    </div>
+
+    <!-- KULLANICI (USER) PANELİ -->
+    <div id="dashboard-section" class="hidden">
+        <p style="text-align: center; color: #aaa;">Hoş geldin, <span id="user-display" style="color:#fff; font-weight:bold;"></span></p>
+
+        <h2>Bakiyeler</h2>
+        <table class="balance-table" id="user-balances"></table>
+
+        <h2>Para Yatır / Çek</h2>
+        <div class="form-group">
+            <label>Para Birimi</label>
+            <select id="currency">
+                <option value="TRY">TRY</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Miktar</label>
+            <input type="number" id="amount" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <button onclick="transaction('deposit')">Para Yatır</button>
+        <button class="outline" onclick="transaction('withdraw')">Para Çek</button>
+
+        <h2>Başka Kullanıcıya Transfer</h2>
+        <div class="form-group">
+            <label>Hedef Kullanıcı Adı</label>
+            <input type="text" id="transfer-target" placeholder="ornek_kullanici">
+        </div>
+        <div class="form-group">
+            <label>Para Birimi</label>
+            <select id="transfer-currency">
+                <option value="TRY">TRY</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Miktar</label>
+            <input type="number" id="transfer-amount" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <button class="outline" onclick="transfer()">Transfer Et</button>
+
+        <h2>Döviz Bozdur</h2>
+        <div class="form-group">
+            <label>Kaynak Para Birimi</label>
+            <select id="exchange-from">
+                <option value="TRY">TRY</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Hedef Para Birimi</label>
+            <select id="exchange-to">
+                <option value="USD">USD</option>
+                <option value="TRY">TRY</option>
+                <option value="EUR">EUR</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Miktar (Kaynak)</label>
+            <input type="number" id="exchange-amount" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <button class="outline" onclick="exchange()">Bozdur</button>
+
+        <h2>İşlem Geçmişim</h2>
+        <div class="scroll-table">
+            <table class="balance-table" id="user-history"></table>
+        </div>
+
+        <hr style="border-color:#333; margin: 25px 0;">
+        <button onclick="logout()" style="background: #333; color: #fff;">Çıkış Yap</button>
+    </div>
+
+    <!-- ADMİN PANELİ -->
+    <div id="admin-section" class="hidden">
+        <p style="text-align: center; color: #aaa;">Hoş geldin, <span id="admin-display" style="color:#fff; font-weight:bold;"></span> <span class="role-badge">ADMIN</span></p>
+
+        <h2>Yeni Kullanıcı Oluştur</h2>
+        <div class="form-group">
+            <label>Kullanıcı Adı</label>
+            <input type="text" id="new-username">
+        </div>
+        <div class="form-group">
+            <label>Parola</label>
+            <input type="password" id="new-password">
+        </div>
+        <button class="small" onclick="createUser()">Kullanıcı Ekle</button>
+
+        <h2>Tüm Kullanıcılar</h2>
+        <table class="balance-table" id="admin-users"></table>
+
+        <h2>Tüm İşlemler</h2>
+        <div class="scroll-table">
+            <table class="balance-table" id="admin-transactions"></table>
+        </div>
+
+        <hr style="border-color:#333; margin: 25px 0;">
+        <button onclick="logout()" style="background: #333; color: #fff;">Çıkış Yap</button>
+    </div>
+
+    <div id="message"></div>
+</div>
+
+<script>
+    let authHeader = "";
+
+    function showMessage(msg, isError = false) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.textContent = msg;
+        msgDiv.className = isError ? 'error' : 'success';
+        setTimeout(() => msgDiv.textContent = '', 4000);
+    }
+
+    function authFetch(url, options = {}) {
+        options.headers = Object.assign({ 'Authorization': authHeader }, options.headers || {});
+        return fetch(url, options);
+    }
+
+    async function handleResponse(response) {
+        if (response.ok) return { ok: true, data: await response.json() };
+        const err = await response.json().catch(() => ({}));
+        const firstMsg = err.error || Object.values(err)[0] || "İşlem reddedildi.";
+        return { ok: false, message: firstMsg };
+    }
+
+    async function login() {
+        const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value;
+        if (!user || !pass) return showMessage("Kullanıcı adı ve parola girin", true);
+
+        const candidateAuth = "Basic " + btoa(user + ":" + pass);
+
+        try {
+            const res = await fetch('/api/me', { headers: { 'Authorization': candidateAuth } });
+            if (!res.ok) return showMessage("Kullanıcı adı veya parola hatalı", true);
+            const me = await res.json();
+            authHeader = candidateAuth;
+
+            document.getElementById('login-section').classList.add('hidden');
+
+            currentRole = me.role;
+
+            if (me.role === 'ROLE_ADMIN') {
+                document.getElementById('admin-display').textContent = me.username.toUpperCase();
+                document.getElementById('admin-section').classList.remove('hidden');
+                await loadAdminUsers();
+                await loadAdminTransactions();
+            } else {
+                document.getElementById('user-display').textContent = me.username.toUpperCase();
+                document.getElementById('dashboard-section').classList.remove('hidden');
+                await loadUserBalances();
+                await loadUserHistory();
+            }
+
+            connectWebSocket();
+        } catch (e) {
+            showMessage("Sunucuya bağlanılamadı.", true);
+        }
+    }
+
+    // ---- WebSocket (STOMP üzerinden canlı bildirimler) ----
+    let stompClient = null;
+    let currentRole = "";
+
+    function connectWebSocket() {
+        const socket = new SockJS('/ws');
+        stompClient = new StompJs.Client({
+            webSocketFactory: () => socket,
+            connectHeaders: { Authorization: authHeader },
+            reconnectDelay: 4000,
+            onConnect: () => {
+                if (currentRole === 'ROLE_ADMIN') {
+                    // Herhangi bir kullanıcı işlem yaptığında admin paneli canlı güncellenir
+                    stompClient.subscribe('/topic/admin/transactions', (msg) => {
+                        prependAdminTransaction(JSON.parse(msg.body));
+                        loadAdminUsers();
+                    });
+                } else {
+                    // Bakiyem (transfer ile gelen para dahil) anlık güncellenir
+                    stompClient.subscribe('/user/queue/balance', (msg) => {
+                        const dto = JSON.parse(msg.body);
+                        document.getElementById('user-balances').innerHTML = renderBalanceRows(dto.wallets);
+                        loadUserHistory();
+                        showMessage("Bakiyeniz güncellendi (canlı)");
+                    });
+                }
+            }
+        });
+        stompClient.activate();
+    }
+
+    function prependAdminTransaction(h) {
+        const table = document.getElementById('admin-transactions');
+        if (!table.querySelector('th')) {
+            table.innerHTML = '<tr><th>Tarih</th><th>Kullanıcı</th><th>İşlem</th><th>Miktar</th><th>Detay</th></tr>';
+        }
+        const cls = isIncoming(h.type) ? 'type-in' : 'type-out';
+        const detail = h.counterparty ? h.counterparty : (h.note || '-');
+        const row = `<tr><td>${formatDate(h.timestamp)}</td><td>${h.username}</td><td class="${cls}">${typeLabel(h.type)}</td><td>${h.amount} ${h.currency}</td><td>${detail}</td></tr>`;
+        table.querySelector('tr').insertAdjacentHTML('afterend', row);
+    }
+
+    function logout() {
+        if (stompClient) { stompClient.deactivate(); stompClient = null; }
+        authHeader = "";
+        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('dashboard-section').classList.add('hidden');
+        document.getElementById('admin-section').classList.add('hidden');
+        document.getElementById('username').value = "";
+        document.getElementById('password').value = "";
+    }
+
+    function renderBalanceRows(wallets) {
+        let html = '<tr><th>Para Birimi</th><th>Bakiye</th></tr>';
+        wallets.forEach(w => { html += `<tr><td>${w.currency}</td><td>${w.balance}</td></tr>`; });
+        return html;
+    }
+
+    function formatDate(ts) {
+        if (!ts) return '';
+        return new Date(ts).toLocaleString('tr-TR');
+    }
+
+    function typeLabel(type) {
+        const map = {
+            DEPOSIT: 'Yatırma', WITHDRAW: 'Çekme',
+            TRANSFER_IN: 'Transfer (Gelen)', TRANSFER_OUT: 'Transfer (Giden)',
+            EXCHANGE_IN: 'Döviz (Alınan)', EXCHANGE_OUT: 'Döviz (Satılan)'
+        };
+        return map[type] || type;
+    }
+
+    function isIncoming(type) {
+        return type === 'DEPOSIT' || type === 'TRANSFER_IN' || type === 'EXCHANGE_IN';
+    }
+
+    async function loadUserBalances() {
+        const res = await authFetch('/api/user/me');
+        if (!res.ok) return showMessage("Bakiye bilgisi alınamadı", true);
+        const data = await res.json();
+        document.getElementById('user-balances').innerHTML = renderBalanceRows(data.wallets);
+    }
+
+    async function loadUserHistory() {
+        const res = await authFetch('/api/user/transactions');
+        if (!res.ok) return;
+        const history = await res.json();
+        let html = '<tr><th>Tarih</th><th>İşlem</th><th>Miktar</th><th>Detay</th></tr>';
+        history.forEach(h => {
+            const cls = isIncoming(h.type) ? 'type-in' : 'type-out';
+            const detail = h.counterparty ? h.counterparty : (h.note || '-');
+            html += `<tr><td>${formatDate(h.timestamp)}</td><td class="${cls}">${typeLabel(h.type)}</td><td>${h.amount} ${h.currency}</td><td>${detail}</td></tr>`;
+        });
+        document.getElementById('user-history').innerHTML = html;
+    }
+
+    async function transaction(type) {
+        const amount = document.getElementById('amount').value;
+        const currency = document.getElementById('currency').value;
+        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", true);
+
+        const response = await authFetch(`/api/user/${type}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: Number(amount), currency })
+        });
+        const result = await handleResponse(response);
+        if (result.ok) {
+            document.getElementById('user-balances').innerHTML = renderBalanceRows(result.data.wallets);
+            document.getElementById('amount').value = '';
+            showMessage("İşlem başarılı!");
+            await loadUserHistory();
+        } else {
+            showMessage(result.message, true);
+        }
+    }
+
+    async function transfer() {
+        const targetUsername = document.getElementById('transfer-target').value.trim();
+        const currency = document.getElementById('transfer-currency').value;
+        const amount = document.getElementById('transfer-amount').value;
+        if (!targetUsername) return showMessage("Hedef kullanıcı adı girin", true);
+        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", true);
+
+        const response = await authFetch('/api/user/transfer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetUsername, amount: Number(amount), currency })
+        });
+        const result = await handleResponse(response);
+        if (result.ok) {
+            document.getElementById('user-balances').innerHTML = renderBalanceRows(result.data.wallets);
+            document.getElementById('transfer-amount').value = '';
+            showMessage("Transfer başarılı!");
+            await loadUserHistory();
+        } else {
+            showMessage(result.message, true);
+        }
+    }
+
+    async function exchange() {
+        const fromCurrency = document.getElementById('exchange-from').value;
+        const toCurrency = document.getElementById('exchange-to').value;
+        const amount = document.getElementById('exchange-amount').value;
+        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", true);
+        if (fromCurrency === toCurrency) return showMessage("Aynı para birimine dönüşüm yapılamaz", true);
+
+        const response = await authFetch('/api/user/exchange', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fromCurrency, toCurrency, amount: Number(amount) })
+        });
+        const result = await handleResponse(response);
+        if (result.ok) {
+            document.getElementById('user-balances').innerHTML = renderBalanceRows(result.data.wallets);
+            document.getElementById('exchange-amount').value = '';
+            showMessage("Döviz bozdurma başarılı!");
+            await loadUserHistory();
+        } else {
+            showMessage(result.message, true);
+        }
+    }
+
+    async function loadAdminUsers() {
+        const res = await authFetch('/api/admin/users');
+        if (!res.ok) return showMessage("Kullanıcı listesi alınamadı", true);
+        const users = await res.json();
+
+        let html = '<tr><th>Kullanıcı</th><th>Rol</th><th>TRY</th><th>USD</th><th>EUR</th></tr>';
+        users.forEach(u => {
+            const balances = {};
+            u.wallets.forEach(w => balances[w.currency] = w.balance);
+            html += `<tr><td>${u.username}</td><td>${u.role.replace('ROLE_', '')}</td><td>${balances.TRY ?? '-'}</td><td>${balances.USD ?? '-'}</td><td>${balances.EUR ?? '-'}</td></tr>`;
+        });
+        document.getElementById('admin-users').innerHTML = html;
+    }
+
+    async function loadAdminTransactions() {
+        const res = await authFetch('/api/admin/transactions');
+        if (!res.ok) return;
+        const history = await res.json();
+        let html = '<tr><th>Tarih</th><th>Kullanıcı</th><th>İşlem</th><th>Miktar</th><th>Detay</th></tr>';
+        history.forEach(h => {
+            const cls = isIncoming(h.type) ? 'type-in' : 'type-out';
+            const detail = h.counterparty ? h.counterparty : (h.note || '-');
+            html += `<tr><td>${formatDate(h.timestamp)}</td><td>${h.username}</td><td class="${cls}">${typeLabel(h.type)}</td><td>${h.amount} ${h.currency}</td><td>${detail}</td></tr>`;
+        });
+        document.getElementById('admin-transactions').innerHTML = html;
+    }
+
+    async function createUser() {
+        const username = document.getElementById('new-username').value.trim();
+        const password = document.getElementById('new-password').value;
+        if (!username || !password) return showMessage("Kullanıcı adı ve parola girin", true);
+
+        const res = await authFetch('/api/admin/create-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const result = await handleResponse(res);
+        if (result.ok) {
+            showMessage("Kullanıcı oluşturuldu!");
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+            await loadAdminUsers();
+        } else {
+            showMessage(result.message, true);
+        }
+    }
+</script>
+</body>
+</html>
