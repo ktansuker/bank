@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!--
+        LOG_PATH: Docker içinde çalışırken docker-compose.yml LOG_PATH=/app/logs ortam
+        değişkenini set ediyor. Lokalde "mvn spring-boot:run" ile çalıştırırken bu
+        değişken tanımlı olmadığından, varsayılan olarak proje kökündeki ./logs klasörü
+        kullanılır - böylece iki modda da uygulama sorunsuz açılır.
+    -->
+    <property name="LOG_PATH" value="${LOG_PATH:-./logs}" />
+
+    <!-- Genel uygulama logları: konsola (docker logs bank-app ile görülür) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Genel loglar ayrıca dosyaya da yazılıyor (docker-compose.yml ile host'a mount edilir) -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/application.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+        ÖZEL "TRANSACTION" LOG AKIŞI:
+        AuditLogListener, "com.example.bank.TRANSACTION" adlı ayrı bir logger kullanıyor
+        (sınıf adıyla değil, elle seçilmiş bir isimle). Bu sayede para yatırma/çekme/
+        transfer/döviz işlemlerini, diğer teknik loglardan (SQL sorguları, Spring
+        başlangıç mesajları vb.) AYRI bir dosyada ve okunabilir formatta tutabiliyoruz.
+    -->
+    <appender name="TRANSACTION_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} 💰 %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="TRANSACTION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/transactions.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/transactions.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>90</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} | %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.example.bank.TRANSACTION" level="INFO" additivity="false">
+        <appender-ref ref="TRANSACTION_CONSOLE" />
+        <appender-ref ref="TRANSACTION_FILE" />
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>

@@ -34,7 +34,7 @@ public class BankController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/create-user")
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
-        return ResponseEntity.ok(bankService.createUser(request.getUsername(), request.getPassword()));
+        return ResponseEntity.ok(bankService.createUser(request.getUsername(), request.getEmail(), request.getPassword()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -70,7 +70,7 @@ public class BankController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/user/transfer")
     public ResponseEntity<UserDto> transfer(Principal principal, @Valid @RequestBody TransferRequest request) {
-        return ResponseEntity.ok(bankService.transfer(principal.getName(), request.getTargetUsername(),
+        return ResponseEntity.ok(bankService.transfer(principal.getName(), request.getTargetIdentifier(),
                 request.getAmount(), request.getCurrency()));
     }
 

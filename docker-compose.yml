@@ -11,6 +11,20 @@ services:
       - "5433:5432"
     volumes:
       - bank-postgres-data:/var/lib/postgresql/data
+    # log_statement=all -> her SQL sorgusu (INSERT/UPDATE/SELECT) container loguna yazılır.
+    # Bu sayede "docker logs -f bank-postgres" ile veritabanına giden HER sorguyu canlı izleyebilirsin
+    # (örn. bir transfer olduğunda wallets tablosuna giden iki UPDATE'i orada görürsün).
+    command: >
+      postgres
+      -c log_statement=all
+      -c log_destination=stderr
+      -c log_connections=on
+      -c log_disconnections=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank -d bankdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7
@@ -18,6 +32,11 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   pgadmin:
     image: dpage/pgadmin4
@@ -39,8 +58,55 @@ services:
       RABBITMQ_DEFAULT_USER: bank
       RABBITMQ_DEFAULT_PASS: bank
     ports:
+      # Sende 5672/15672 zaten başka bir RabbitMQ (kargo_rabbitmq) tarafından kullanılıyordu,
+      # o yüzden host tarafında farklı portlar seçtim.
       - "5673:5672"
       - "15673:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: bank-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    # Bu ortam değişkenleri, application.properties'teki değerleri EZER (Spring Boot'un
+    # kuralı: ENV değişkeni her zaman properties dosyasından önceliklidir). Burada "localhost"
+    # yerine servis adlarını (postgres, redis, rabbitmq) kullanıyoruz çünkü artık uygulama
+    # da aynı Docker ağının içinde çalışıyor - container'lar birbirini kendi isimleriyle bulur.
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bank
+      SPRING_DATASOURCE_PASSWORD: bank
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      REDISSON_ADDRESS: redis://redis:6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: bank
+      SPRING_RABBITMQ_PASSWORD: bank
+      LOG_PATH: /app/logs
+    volumes:
+      # Container silinse/yeniden oluşturulsa bile log dosyaları host makinende ./logs
+      # klasöründe kalıcı olarak durur - SQL editörü ya da metin editörüyle de açabilirsin.
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   bank-postgres-data:

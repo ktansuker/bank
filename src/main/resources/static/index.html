@@ -58,6 +58,7 @@
     <!-- KULLANICI (USER) PANELİ -->
     <div id="dashboard-section" class="hidden">
         <p style="text-align: center; color: #aaa;">Hoş geldin, <span id="user-display" style="color:#fff; font-weight:bold;"></span></p>
+        <p style="text-align: center; color: #666; font-size: 11px;">ID: <span id="user-id-display"></span> · E-posta: <span id="user-email-display"></span> — başkalarının size transfer yapması için bunları paylaşabilirsiniz</p>
 
         <h2>Bakiyeler</h2>
         <table class="balance-table" id="user-balances"></table>
@@ -80,8 +81,8 @@
 
         <h2>Başka Kullanıcıya Transfer</h2>
         <div class="form-group">
-            <label>Hedef Kullanıcı Adı</label>
-            <input type="text" id="transfer-target" placeholder="ornek_kullanici">
+            <label>Alıcı (Kullanıcı ID / E-posta / Kullanıcı Adı)</label>
+            <input type="text" id="transfer-target" placeholder="42, kaan@ornek.com veya kaan">
         </div>
         <div class="form-group">
             <label>Para Birimi</label>
@@ -137,6 +138,10 @@
         <div class="form-group">
             <label>Kullanıcı Adı</label>
             <input type="text" id="new-username">
+        </div>
+        <div class="form-group">
+            <label>E-posta</label>
+            <input type="email" id="new-email" placeholder="kullanici@ornek.com">
         </div>
         <div class="form-group">
             <label>Parola</label>
@@ -297,6 +302,8 @@
         if (!res.ok) return showMessage("Bakiye bilgisi alınamadı", true);
         const data = await res.json();
         document.getElementById('user-balances').innerHTML = renderBalanceRows(data.wallets);
+        document.getElementById('user-id-display').textContent = data.id;
+        document.getElementById('user-email-display').textContent = data.email ?? '-';
     }
 
     async function loadUserHistory() {
@@ -334,16 +341,16 @@
     }
 
     async function transfer() {
-        const targetUsername = document.getElementById('transfer-target').value.trim();
+        const targetIdentifier = document.getElementById('transfer-target').value.trim();
         const currency = document.getElementById('transfer-currency').value;
         const amount = document.getElementById('transfer-amount').value;
-        if (!targetUsername) return showMessage("Hedef kullanıcı adı girin", true);
+        if (!targetIdentifier) return showMessage("Alıcı bilgisi (ID / e-posta / kullanıcı adı) girin", true);
         if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", true);
 
         const response = await authFetch('/api/user/transfer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ targetUsername, amount: Number(amount), currency })
+            body: JSON.stringify({ targetIdentifier, amount: Number(amount), currency })
         });
         const result = await handleResponse(response);
         if (result.ok) {
@@ -384,11 +391,11 @@
         if (!res.ok) return showMessage("Kullanıcı listesi alınamadı", true);
         const users = await res.json();
 
-        let html = '<tr><th>Kullanıcı</th><th>Rol</th><th>TRY</th><th>USD</th><th>EUR</th></tr>';
+        let html = '<tr><th>ID</th><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>TRY</th><th>USD</th><th>EUR</th></tr>';
         users.forEach(u => {
             const balances = {};
             u.wallets.forEach(w => balances[w.currency] = w.balance);
-            html += `<tr><td>${u.username}</td><td>${u.role.replace('ROLE_', '')}</td><td>${balances.TRY ?? '-'}</td><td>${balances.USD ?? '-'}</td><td>${balances.EUR ?? '-'}</td></tr>`;
+            html += `<tr><td>${u.id}</td><td>${u.username}</td><td>${u.email ?? '-'}</td><td>${u.role.replace('ROLE_', '')}</td><td>${balances.TRY ?? '-'}</td><td>${balances.USD ?? '-'}</td><td>${balances.EUR ?? '-'}</td></tr>`;
         });
         document.getElementById('admin-users').innerHTML = html;
     }
@@ -408,18 +415,20 @@
 
     async function createUser() {
         const username = document.getElementById('new-username').value.trim();
+        const email = document.getElementById('new-email').value.trim();
         const password = document.getElementById('new-password').value;
-        if (!username || !password) return showMessage("Kullanıcı adı ve parola girin", true);
+        if (!username || !email || !password) return showMessage("Kullanıcı adı, e-posta ve parola girin", true);
 
         const res = await authFetch('/api/admin/create-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, email, password })
         });
         const result = await handleResponse(res);
         if (result.ok) {
             showMessage("Kullanıcı oluşturuldu!");
             document.getElementById('new-username').value = '';
+            document.getElementById('new-email').value = '';
             document.getElementById('new-password').value = '';
             await loadAdminUsers();
         } else {

@@ -7,13 +7,14 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface BankService {
-    UserDto createUser(String username, String password);
+    UserDto createUser(String username, String email, String password);
 
     UserDto deposit(String username, BigDecimal amount, Currency currency);
 
     UserDto withdraw(String username, BigDecimal amount, Currency currency);
 
-    UserDto transfer(String fromUsername, String toUsername, BigDecimal amount, Currency currency);
+    // targetIdentifier: kullanıcı ID'si, e-posta ya da kullanıcı adı olabilir
+    UserDto transfer(String fromUsername, String targetIdentifier, BigDecimal amount, Currency currency);
 
     UserDto exchange(String username, Currency fromCurrency, Currency toCurrency, BigDecimal amount);
 

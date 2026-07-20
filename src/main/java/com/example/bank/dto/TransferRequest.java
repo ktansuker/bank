@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 
 public class TransferRequest {
 
-    @NotBlank(message = "Hedef kullanıcı adı boş olamaz")
-    private String targetUsername;
+    @NotBlank(message = "Alıcı (kullanıcı ID / e-posta / kullanıcı adı) boş olamaz")
+    private String targetIdentifier;
 
     @NotNull(message = "Para birimi seçilmelidir")
     private Currency currency;
@@ -18,12 +18,12 @@ public class TransferRequest {
     @DecimalMin(value = "0.01", message = "Miktar 0'dan büyük olmalıdır")
     private BigDecimal amount;
 
-    public String getTargetUsername() {
-        return targetUsername;
+    public String getTargetIdentifier() {
+        return targetIdentifier;
     }
 
-    public void setTargetUsername(String targetUsername) {
-        this.targetUsername = targetUsername;
+    public void setTargetIdentifier(String targetIdentifier) {
+        this.targetIdentifier = targetIdentifier;
     }
 
     public Currency getCurrency() {

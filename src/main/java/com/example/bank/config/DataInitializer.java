@@ -22,7 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (!userRepository.existsByUsername("admin")) {
-            User admin = new User("admin", passwordEncoder.encode("admin123"), "ROLE_ADMIN");
+            User admin = new User("admin", "admin@ktbank.com", passwordEncoder.encode("admin123"), "ROLE_ADMIN");
             for (Currency currency : Currency.values()) {
                 admin.addWallet(new Wallet(admin, currency));
             }
