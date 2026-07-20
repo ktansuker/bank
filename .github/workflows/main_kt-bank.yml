@@ -18,17 +18,16 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      - name: Copy JAR to VM
+      - name: Copy project files to VM
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
-          source: "target/*.jar"
+          source: "."
           target: "/home/azureuser/app"
-          strip_components: 1
 
-      - name: Rename and restart application
+      - name: Build and run container on VM
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VM_HOST }}
@@ -36,6 +35,5 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             cd /home/azureuser/app
-            JAR_FILE=$(ls *.jar | grep -v bank.jar | head -n 1)
-            mv "$JAR_FILE" bank.jar
-            sudo systemctl restart bankapp
+            docker compose down
+            docker compose up -d --build
