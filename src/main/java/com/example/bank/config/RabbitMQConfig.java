@@ -27,6 +27,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue notificationQueue() {
+        // durable=true: RabbitMQ yeniden başlasa bile kuyruk tanımı kaybolmaz
         return new Queue(NOTIFICATION_QUEUE, true);
     }
 

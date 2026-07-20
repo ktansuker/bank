@@ -30,6 +30,7 @@ public class TransactionHistory {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balanceAfter;
 
+    // Transfer işlemlerinde karşı tarafın kullanıcı adı (varsa)
     private String counterparty;
 
     private String note;

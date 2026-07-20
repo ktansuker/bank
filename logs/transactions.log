@@ -1,0 +1,12 @@
+2026-07-20 07:22:23 | PARA YATIRILDI | kullanıcı: kaan | miktar: 500 TRY | işlem sonrası bakiye: 500.00 TRY | not: 500 TRY yatırıldı
+2026-07-20 07:22:30 | PARA YATIRILDI | kullanıcı: kaan | miktar: 500 USD | işlem sonrası bakiye: 500.00 USD | not: 500 USD yatırıldı
+2026-07-20 07:22:34 | PARA YATIRILDI | kullanıcı: kaan | miktar: 500 EUR | işlem sonrası bakiye: 500.00 EUR | not: 500 EUR yatırıldı
+2026-07-20 07:22:41 | PARA GÖNDERİLDİ | kullanıcı: kaan | miktar: 100 TRY | işlem sonrası bakiye: 400.00 TRY | alıcı: emirhan | not: 100 TRY emirhan kullanıcısına gönderildi
+2026-07-20 07:22:41 | PARA ALINDI | kullanıcı: emirhan | miktar: 100 TRY | işlem sonrası bakiye: 100.00 TRY | gönderen: kaan | not: 100 TRY kaan kullanıcısından alındı
+2026-07-20 07:22:54 | PARA GÖNDERİLDİ | kullanıcı: kaan | miktar: 100 USD | işlem sonrası bakiye: 400.00 USD | alıcı: emirhan | not: 100 USD emirhan kullanıcısına gönderildi
+2026-07-20 07:22:54 | PARA ALINDI | kullanıcı: emirhan | miktar: 100 USD | işlem sonrası bakiye: 100.00 USD | gönderen: kaan | not: 100 USD kaan kullanıcısından alındı
+2026-07-20 07:23:11 | PARA GÖNDERİLDİ | kullanıcı: kaan | miktar: 100 EUR | işlem sonrası bakiye: 400.00 EUR | alıcı: admin | not: 100 EUR admin kullanıcısına gönderildi
+2026-07-20 07:23:11 | PARA ALINDI | kullanıcı: admin | miktar: 100 EUR | işlem sonrası bakiye: 100.00 EUR | gönderen: kaan | not: 100 EUR kaan kullanıcısından alındı
+2026-07-20 07:29:40 | PARA YATIRILDI | kullanıcı: kaan | miktar: 100 EUR | işlem sonrası bakiye: 500.00 EUR | not: 100 EUR yatırıldı
+2026-07-20 07:29:51 | PARA GÖNDERİLDİ | kullanıcı: kaan | miktar: 100 EUR | işlem sonrası bakiye: 400.00 EUR | alıcı: admin | not: 100 EUR admin kullanıcısına gönderildi
+2026-07-20 07:29:51 | PARA ALINDI | kullanıcı: admin | miktar: 100 EUR | işlem sonrası bakiye: 200.00 EUR | gönderen: kaan | not: 100 EUR kaan kullanıcısından alındı

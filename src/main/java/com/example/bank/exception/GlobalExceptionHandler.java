@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // İş kuralı hataları (yetersiz bakiye, kullanıcı bulunamadı, vb.)
     @ExceptionHandler(BankException.class)
     public ResponseEntity<Map<String, String>> handleBankException(BankException ex) {
         Map<String, String> body = new HashMap<>();

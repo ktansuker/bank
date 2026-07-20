@@ -10,10 +10,11 @@ import java.util.Map;
 @Service
 public class ExchangeRateService {
 
+    // 1 birim ilgili para biriminin TRY karşılığı
     private static final Map<Currency, BigDecimal> RATE_TO_TRY = Map.of(
             Currency.TRY, BigDecimal.ONE,
             Currency.USD, new BigDecimal("45.00"),
-            Currency.EUR, new BigDecimal("54.00"));
+            Currency.EUR, new BigDecimal("53.00"));
 
     public BigDecimal convert(BigDecimal amount, Currency from, Currency to) {
         if (from == to) {
