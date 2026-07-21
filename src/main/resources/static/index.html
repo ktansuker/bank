@@ -3,175 +3,432 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KT BANK</title>
+    <title>KT Bank</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #000; color: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 40px 16px; box-sizing: border-box; }
-        .container { background-color: #111; padding: 40px; width: 100%; max-width: 480px; border: 1px solid #333; box-shadow: 8px 8px 0px #fff; }
-        h1 { font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; margin-bottom: 30px; border-bottom: 2px solid #fff; padding-bottom: 10px; text-align: center;}
-        h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin: 25px 0 10px; border-top: 1px solid #222; padding-top: 15px;}
+        :root {
+            --bg: #F4F6F8;
+            --surface: #FFFFFF;
+            --surface-soft: #F8FAFB;
+            --border: #E5E9EE;
+            --ink: #101828;
+            --ink-soft: #667085;
+            --ink-faint: #98A2B3;
+            --accent: #0F9D77;
+            --accent-hover: #0C7F60;
+            --accent-soft: #E6F6F1;
+            --danger: #E11D48;
+            --danger-soft: #FDECEF;
+            --success: #16A34A;
+            --success-soft: #E9F9EF;
+            --info: #2563EB;
+            --info-soft: #EAF1FE;
+            --radius: 14px;
+            --shadow-card: 0 1px 2px rgba(16,24,40,0.04), 0 12px 32px -12px rgba(16,24,40,0.10);
+            --shadow-btn: 0 1px 2px rgba(16,24,40,0.06);
+        }
 
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; color: #aaa; }
-        input, select { width: 100%; padding: 12px; box-sizing: border-box; font-size: 16px; border: 1px solid #333; background: #000; color: #fff; outline: none; transition: 0.3s;}
-        input:focus, select:focus { border-color: #fff; }
+        * { box-sizing: border-box; }
 
-        button { width: 100%; padding: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.2s; background: #fff; color: #000; border: none; margin-top: 10px; }
-        button:hover { background: #ccc; }
-        button.outline { background: transparent; color: #fff; border: 2px solid #fff; }
-        button.outline:hover { background: #fff; color: #000; }
-        button.small { padding: 10px; font-size: 12px; }
+        body {
+            background:
+                radial-gradient(1200px 600px at 15% -10%, #E9F7F1 0%, transparent 55%),
+                radial-gradient(900px 500px at 100% 0%, #EEF2FF 0%, transparent 50%),
+                var(--bg);
+            color: var(--ink);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 48px 16px;
+        }
 
-        #message { margin-top: 20px; font-weight: bold; text-align: center; min-height: 20px; }
-        .success { color: #0f0; }
-        .error { color: #f00; }
+        .page { width: 100%; max-width: 520px; }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .brand-mark {
+            width: 34px; height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(155deg, var(--accent), #0B6E52);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px -2px rgba(15,157,119,0.45);
+        }
+        .brand-mark svg { width: 18px; height: 18px; }
+        .brand-text { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+        .brand-text span { color: var(--accent); }
+
+        .container {
+            background-color: var(--surface);
+            padding: 32px;
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-card);
+        }
+
+        h1 { display: none; }
+
+        h2 {
+            font-family: 'Sora', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: var(--ink);
+            margin: 28px 0 14px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        h2::before {
+            content: "";
+            width: 6px; height: 6px;
+            border-radius: 2px;
+            background: var(--accent);
+            display: inline-block;
+        }
+        .form-group:first-of-type,
+        div > h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+        .form-group { margin-bottom: 14px; }
+        label {
+            display: block; margin-bottom: 6px;
+            font-weight: 600; font-size: 12.5px;
+            color: var(--ink-soft);
+        }
+        input, select {
+            width: 100%; padding: 11px 12px;
+            font-size: 14.5px; font-family: inherit;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface-soft);
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+        input::placeholder { color: var(--ink-faint); }
+        input:focus, select:focus {
+            border-color: var(--accent);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        button {
+            width: 100%; padding: 12px 16px;
+            font-family: inherit;
+            font-weight: 600; font-size: 14.5px;
+            cursor: pointer;
+            border: none; border-radius: 10px;
+            margin-top: 10px;
+            background: var(--accent);
+            color: #fff;
+            box-shadow: var(--shadow-btn);
+            transition: background 0.15s, transform 0.1s;
+        }
+        button:hover { background: var(--accent-hover); }
+        button:active { transform: translateY(1px); }
+        button.outline {
+            background: var(--surface);
+            color: var(--ink);
+            border: 1.5px solid var(--border);
+            box-shadow: none;
+        }
+        button.outline:hover { background: var(--surface-soft); border-color: var(--ink-faint); }
+        button.ghost {
+            background: transparent;
+            color: var(--ink-soft);
+            box-shadow: none;
+        }
+        button.ghost:hover { background: var(--surface-soft); color: var(--ink); }
+        button.small { padding: 10px 14px; font-size: 13px; }
+
         .hidden { display: none; }
 
-        table.balance-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
-        .balance-table th, .balance-table td { border: 1px solid #333; padding: 6px; text-align: left; }
-        .balance-table th { color: #aaa; text-transform: uppercase; font-size: 10px; }
-        .role-badge { font-size: 10px; padding: 2px 6px; border: 1px solid #fff; text-transform: uppercase; }
-        .scroll-table { max-height: 220px; overflow-y: auto; border: 1px solid #333; }
-        .type-in { color: #0f0; }
-        .type-out { color: #f66; }
+        table.balance-table {
+            width: 100%; border-collapse: collapse;
+            margin-bottom: 4px; font-size: 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .balance-table th, .balance-table td {
+            padding: 10px 12px; text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .balance-table tr:last-child td { border-bottom: none; }
+        .balance-table th {
+            color: var(--ink-soft); font-weight: 600; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+            background: var(--surface-soft);
+        }
+        .balance-table td { font-variant-numeric: tabular-nums; }
+
+        .role-badge {
+            font-size: 10.5px; font-weight: 700; padding: 3px 9px;
+            border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em;
+            background: var(--accent-soft); color: var(--accent-hover);
+        }
+        .scroll-table { max-height: 220px; overflow-y: auto; border-radius: 10px; }
+        .scroll-table table { border-radius: 0; }
+        .type-in { color: var(--success); font-weight: 600; }
+        .type-out { color: var(--danger); font-weight: 600; }
+
+        .welcome-line { text-align: center; color: var(--ink-soft); font-size: 14px; margin: 0 0 4px; }
+        .welcome-line b { color: var(--ink); }
+        .meta-line {
+            text-align: center; color: var(--ink-faint); font-size: 11.5px;
+            margin: 0 0 20px; line-height: 1.5;
+        }
+        .meta-line span { color: var(--ink-soft); font-weight: 600; }
+
+        hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+        /* ---- Toast bildirim sistemi ---- */
+        #toast-container {
+            position: fixed;
+            top: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 10px;
+            z-index: 1000;
+            width: min(340px, calc(100vw - 40px));
+        }
+        .toast {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--ink-faint);
+            border-radius: 10px;
+            padding: 13px 14px 13px 14px;
+            box-shadow: 0 4px 10px rgba(16,24,40,0.06), 0 12px 28px -8px rgba(16,24,40,0.18);
+            display: flex; align-items: flex-start; gap: 10px;
+            animation: toast-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+        .toast.leaving { animation: toast-out 0.22s ease-in forwards; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.info { border-left-color: var(--info); }
+        .toast-icon {
+            width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px;
+            border-radius: 999px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .toast.success .toast-icon { background: var(--success-soft); color: var(--success); }
+        .toast.error .toast-icon { background: var(--danger-soft); color: var(--danger); }
+        .toast.info .toast-icon { background: var(--info-soft); color: var(--info); }
+        .toast-icon svg { width: 12px; height: 12px; }
+        .toast-text { font-size: 13.5px; line-height: 1.4; color: var(--ink); font-weight: 500; padding-right: 6px; }
+        .toast-progress {
+            position: absolute; left: 0; bottom: 0; height: 2.5px;
+            background: currentColor; opacity: 0.35;
+            animation: toast-progress 4s linear forwards;
+        }
+        .toast.success .toast-progress { color: var(--success); }
+        .toast.error .toast-progress { color: var(--danger); }
+        .toast.info .toast-progress { color: var(--info); }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateX(24px) scale(0.97); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes toast-out {
+            from { opacity: 1; transform: translateX(0); max-height: 100px; margin-bottom: 10px; }
+            to { opacity: 0; transform: translateX(24px); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+        }
+        @keyframes toast-progress {
+            from { width: 100%; } to { width: 0%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .toast, .toast.leaving { animation: none; }
+            .toast-progress { animation: none; display: none; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
 </head>
 <body>
 
-<div class="container">
-    <h1>KT BANK</h1>
+<div id="toast-container"></div>
 
-    <!-- GİRİŞ EKRANI -->
-    <div id="login-section">
-        <div class="form-group">
-            <label>Kullanıcı Adı</label>
-            <input type="text" id="username" placeholder="admin">
+<div class="page">
+    <div class="brand">
+        <div class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7v2h20V7L12 2z" fill="white"/>
+                <path d="M4 10v8h2v-8H4zm5 0v8h2v-8H9zm5 0v8h2v-8h-2zm5 0v8h2v-8h-2z" fill="white"/>
+                <path d="M2 20h20v2H2v-2z" fill="white"/>
+            </svg>
         </div>
-        <div class="form-group">
-            <label>Parola</label>
-            <input type="password" id="password" placeholder="admin123">
-        </div>
-        <button onclick="login()">Sisteme Gir</button>
+        <div class="brand-text">KT <span>Bank</span></div>
     </div>
 
-    <!-- KULLANICI (USER) PANELİ -->
-    <div id="dashboard-section" class="hidden">
-        <p style="text-align: center; color: #aaa;">Hoş geldin, <span id="user-display" style="color:#fff; font-weight:bold;"></span></p>
-        <p style="text-align: center; color: #666; font-size: 11px;">ID: <span id="user-id-display"></span> · E-posta: <span id="user-email-display"></span> — başkalarının size transfer yapması için bunları paylaşabilirsiniz</p>
+    <div class="container">
+        <h1>KT BANK</h1>
 
-        <h2>Bakiyeler</h2>
-        <table class="balance-table" id="user-balances"></table>
-
-        <h2>Para Yatır / Çek</h2>
-        <div class="form-group">
-            <label>Para Birimi</label>
-            <select id="currency">
-                <option value="TRY">TRY</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Miktar</label>
-            <input type="number" id="amount" placeholder="0.00" min="0" step="0.01">
-        </div>
-        <button onclick="transaction('deposit')">Para Yatır</button>
-        <button class="outline" onclick="transaction('withdraw')">Para Çek</button>
-
-        <h2>Başka Kullanıcıya Transfer</h2>
-        <div class="form-group">
-            <label>Alıcı (Kullanıcı ID / E-posta / Kullanıcı Adı)</label>
-            <input type="text" id="transfer-target" placeholder="42, kaan@ornek.com veya kaan">
-        </div>
-        <div class="form-group">
-            <label>Para Birimi</label>
-            <select id="transfer-currency">
-                <option value="TRY">TRY</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Miktar</label>
-            <input type="number" id="transfer-amount" placeholder="0.00" min="0" step="0.01">
-        </div>
-        <button class="outline" onclick="transfer()">Transfer Et</button>
-
-        <h2>Döviz Bozdur</h2>
-        <div class="form-group">
-            <label>Kaynak Para Birimi</label>
-            <select id="exchange-from">
-                <option value="TRY">TRY</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Hedef Para Birimi</label>
-            <select id="exchange-to">
-                <option value="USD">USD</option>
-                <option value="TRY">TRY</option>
-                <option value="EUR">EUR</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Miktar (Kaynak)</label>
-            <input type="number" id="exchange-amount" placeholder="0.00" min="0" step="0.01">
-        </div>
-        <button class="outline" onclick="exchange()">Bozdur</button>
-
-        <h2>İşlem Geçmişim</h2>
-        <div class="scroll-table">
-            <table class="balance-table" id="user-history"></table>
+        <!-- GİRİŞ EKRANI -->
+        <div id="login-section">
+            <div class="form-group">
+                <label>Kullanıcı Adı</label>
+                <input type="text" id="username" placeholder="admin">
+            </div>
+            <div class="form-group">
+                <label>Parola</label>
+                <input type="password" id="password" placeholder="admin123">
+            </div>
+            <button onclick="login()">Sisteme Gir</button>
         </div>
 
-        <hr style="border-color:#333; margin: 25px 0;">
-        <button onclick="logout()" style="background: #333; color: #fff;">Çıkış Yap</button>
+        <!-- KULLANICI (USER) PANELİ -->
+        <div id="dashboard-section" class="hidden">
+            <p class="welcome-line">Hoş geldin, <b id="user-display"></b></p>
+            <p class="meta-line">ID: <span id="user-id-display"></span> · E-posta: <span id="user-email-display"></span><br>başkalarının size transfer yapması için bunları paylaşabilirsiniz</p>
+
+            <h2>Bakiyeler</h2>
+            <table class="balance-table" id="user-balances"></table>
+
+            <h2>Para Yatır / Çek</h2>
+            <div class="form-group">
+                <label>Para Birimi</label>
+                <select id="currency">
+                    <option value="TRY">TRY</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Miktar</label>
+                <input type="number" id="amount" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <button onclick="transaction('deposit')">Para Yatır</button>
+            <button class="outline" onclick="transaction('withdraw')">Para Çek</button>
+
+            <h2>Başka Kullanıcıya Transfer</h2>
+            <div class="form-group">
+                <label>Alıcı (Kullanıcı ID / E-posta / Kullanıcı Adı)</label>
+                <input type="text" id="transfer-target" placeholder="42, kaan@ornek.com veya kaan">
+            </div>
+            <div class="form-group">
+                <label>Para Birimi</label>
+                <select id="transfer-currency">
+                    <option value="TRY">TRY</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Miktar</label>
+                <input type="number" id="transfer-amount" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <button class="outline" onclick="transfer()">Transfer Et</button>
+
+            <h2>Döviz Bozdur</h2>
+            <div class="form-group">
+                <label>Kaynak Para Birimi</label>
+                <select id="exchange-from">
+                    <option value="TRY">TRY</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Hedef Para Birimi</label>
+                <select id="exchange-to">
+                    <option value="USD">USD</option>
+                    <option value="TRY">TRY</option>
+                    <option value="EUR">EUR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Miktar (Kaynak)</label>
+                <input type="number" id="exchange-amount" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <button class="outline" onclick="exchange()">Bozdur</button>
+
+            <h2>İşlem Geçmişim</h2>
+            <div class="scroll-table">
+                <table class="balance-table" id="user-history"></table>
+            </div>
+
+            <hr>
+            <button class="ghost" onclick="logout()">Çıkış Yap</button>
+        </div>
+
+        <!-- ADMİN PANELİ -->
+        <div id="admin-section" class="hidden">
+            <p class="welcome-line">Hoş geldin, <b id="admin-display"></b> <span class="role-badge">Admin</span></p>
+
+            <h2>Yeni Kullanıcı Oluştur</h2>
+            <div class="form-group">
+                <label>Kullanıcı Adı</label>
+                <input type="text" id="new-username">
+            </div>
+            <div class="form-group">
+                <label>E-posta</label>
+                <input type="email" id="new-email" placeholder="kullanici@ornek.com">
+            </div>
+            <div class="form-group">
+                <label>Parola</label>
+                <input type="password" id="new-password">
+            </div>
+            <button class="small" onclick="createUser()">Kullanıcı Ekle</button>
+
+            <h2>Tüm Kullanıcılar</h2>
+            <table class="balance-table" id="admin-users"></table>
+
+            <h2>Tüm İşlemler</h2>
+            <div class="scroll-table">
+                <table class="balance-table" id="admin-transactions"></table>
+            </div>
+
+            <hr>
+            <button class="ghost" onclick="logout()">Çıkış Yap</button>
+        </div>
     </div>
-
-    <!-- ADMİN PANELİ -->
-    <div id="admin-section" class="hidden">
-        <p style="text-align: center; color: #aaa;">Hoş geldin, <span id="admin-display" style="color:#fff; font-weight:bold;"></span> <span class="role-badge">ADMIN</span></p>
-
-        <h2>Yeni Kullanıcı Oluştur</h2>
-        <div class="form-group">
-            <label>Kullanıcı Adı</label>
-            <input type="text" id="new-username">
-        </div>
-        <div class="form-group">
-            <label>E-posta</label>
-            <input type="email" id="new-email" placeholder="kullanici@ornek.com">
-        </div>
-        <div class="form-group">
-            <label>Parola</label>
-            <input type="password" id="new-password">
-        </div>
-        <button class="small" onclick="createUser()">Kullanıcı Ekle</button>
-
-        <h2>Tüm Kullanıcılar</h2>
-        <table class="balance-table" id="admin-users"></table>
-
-        <h2>Tüm İşlemler</h2>
-        <div class="scroll-table">
-            <table class="balance-table" id="admin-transactions"></table>
-        </div>
-
-        <hr style="border-color:#333; margin: 25px 0;">
-        <button onclick="logout()" style="background: #333; color: #fff;">Çıkış Yap</button>
-    </div>
-
-    <div id="message"></div>
 </div>
 
 <script>
     let authHeader = "";
 
-    function showMessage(msg, isError = false) {
-        const msgDiv = document.getElementById('message');
-        msgDiv.textContent = msg;
-        msgDiv.className = isError ? 'error' : 'success';
-        setTimeout(() => msgDiv.textContent = '', 4000);
+    // ---- Toast bildirim sistemi ----
+    // type: 'success' | 'error' | 'info'
+    const TOAST_ICONS = {
+        success: '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v5M12 8v.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+    };
+
+    function showMessage(msg, isErrorOrType = false) {
+        const type = isErrorOrType === true ? 'error'
+                   : isErrorOrType === false ? 'success'
+                   : isErrorOrType; // 'success' | 'error' | 'info' verilebilir
+
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon">${TOAST_ICONS[type]}</div>
+            <div class="toast-text">${msg}</div>
+            <div class="toast-progress"></div>
+        `;
+        container.appendChild(toast);
+
+        const remove = () => {
+            toast.classList.add('leaving');
+            setTimeout(() => toast.remove(), 220);
+        };
+        const timer = setTimeout(remove, 4000);
+        toast.addEventListener('click', () => { clearTimeout(timer); remove(); });
     }
 
     function authFetch(url, options = {}) {
@@ -189,13 +446,13 @@
     async function login() {
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value;
-        if (!user || !pass) return showMessage("Kullanıcı adı ve parola girin", true);
+        if (!user || !pass) return showMessage("Kullanıcı adı ve parola girin", 'error');
 
         const candidateAuth = "Basic " + btoa(user + ":" + pass);
 
         try {
             const res = await fetch('/api/me', { headers: { 'Authorization': candidateAuth } });
-            if (!res.ok) return showMessage("Kullanıcı adı veya parola hatalı", true);
+            if (!res.ok) return showMessage("Kullanıcı adı veya parola hatalı", 'error');
             const me = await res.json();
             authHeader = candidateAuth;
 
@@ -215,9 +472,10 @@
                 await loadUserHistory();
             }
 
+            showMessage(`Hoş geldin, ${me.username}`, 'success');
             connectWebSocket();
         } catch (e) {
-            showMessage("Sunucuya bağlanılamadı.", true);
+            showMessage("Sunucuya bağlanılamadı.", 'error');
         }
     }
 
@@ -244,7 +502,7 @@
                         const dto = JSON.parse(msg.body);
                         document.getElementById('user-balances').innerHTML = renderBalanceRows(dto.wallets);
                         loadUserHistory();
-                        showMessage("Bakiyeniz güncellendi (canlı)");
+                        showMessage("Bakiyeniz güncellendi (canlı)", 'info');
                     });
                 }
             }
@@ -299,7 +557,7 @@
 
     async function loadUserBalances() {
         const res = await authFetch('/api/user/me');
-        if (!res.ok) return showMessage("Bakiye bilgisi alınamadı", true);
+        if (!res.ok) return showMessage("Bakiye bilgisi alınamadı", 'error');
         const data = await res.json();
         document.getElementById('user-balances').innerHTML = renderBalanceRows(data.wallets);
         document.getElementById('user-id-display').textContent = data.id;
@@ -322,7 +580,7 @@
     async function transaction(type) {
         const amount = document.getElementById('amount').value;
         const currency = document.getElementById('currency').value;
-        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", true);
+        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", 'error');
 
         const response = await authFetch(`/api/user/${type}`, {
             method: 'POST',
@@ -333,10 +591,10 @@
         if (result.ok) {
             document.getElementById('user-balances').innerHTML = renderBalanceRows(result.data.wallets);
             document.getElementById('amount').value = '';
-            showMessage("İşlem başarılı!");
+            showMessage(type === 'deposit' ? `${amount} ${currency} başarıyla yatırıldı ✓` : `${amount} ${currency} başarıyla çekildi ✓`, 'success');
             await loadUserHistory();
         } else {
-            showMessage(result.message, true);
+            showMessage(result.message, 'error');
         }
     }
 
@@ -344,8 +602,8 @@
         const targetIdentifier = document.getElementById('transfer-target').value.trim();
         const currency = document.getElementById('transfer-currency').value;
         const amount = document.getElementById('transfer-amount').value;
-        if (!targetIdentifier) return showMessage("Alıcı bilgisi (ID / e-posta / kullanıcı adı) girin", true);
-        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", true);
+        if (!targetIdentifier) return showMessage("Alıcı bilgisi (ID / e-posta / kullanıcı adı) girin", 'error');
+        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", 'error');
 
         const response = await authFetch('/api/user/transfer', {
             method: 'POST',
@@ -356,10 +614,10 @@
         if (result.ok) {
             document.getElementById('user-balances').innerHTML = renderBalanceRows(result.data.wallets);
             document.getElementById('transfer-amount').value = '';
-            showMessage("Transfer başarılı!");
+            showMessage(`${amount} ${currency}, ${targetIdentifier} kullanıcısına gönderildi ✓`, 'success');
             await loadUserHistory();
         } else {
-            showMessage(result.message, true);
+            showMessage(result.message, 'error');
         }
     }
 
@@ -367,8 +625,8 @@
         const fromCurrency = document.getElementById('exchange-from').value;
         const toCurrency = document.getElementById('exchange-to').value;
         const amount = document.getElementById('exchange-amount').value;
-        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", true);
-        if (fromCurrency === toCurrency) return showMessage("Aynı para birimine dönüşüm yapılamaz", true);
+        if (!amount || Number(amount) <= 0) return showMessage("Geçerli bir miktar girin", 'error');
+        if (fromCurrency === toCurrency) return showMessage("Aynı para birimine dönüşüm yapılamaz", 'error');
 
         const response = await authFetch('/api/user/exchange', {
             method: 'POST',
@@ -379,16 +637,16 @@
         if (result.ok) {
             document.getElementById('user-balances').innerHTML = renderBalanceRows(result.data.wallets);
             document.getElementById('exchange-amount').value = '';
-            showMessage("Döviz bozdurma başarılı!");
+            showMessage(`${amount} ${fromCurrency} → ${toCurrency} olarak bozduruldu ✓`, 'success');
             await loadUserHistory();
         } else {
-            showMessage(result.message, true);
+            showMessage(result.message, 'error');
         }
     }
 
     async function loadAdminUsers() {
         const res = await authFetch('/api/admin/users');
-        if (!res.ok) return showMessage("Kullanıcı listesi alınamadı", true);
+        if (!res.ok) return showMessage("Kullanıcı listesi alınamadı", 'error');
         const users = await res.json();
 
         let html = '<tr><th>ID</th><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>TRY</th><th>USD</th><th>EUR</th></tr>';
@@ -417,7 +675,7 @@
         const username = document.getElementById('new-username').value.trim();
         const email = document.getElementById('new-email').value.trim();
         const password = document.getElementById('new-password').value;
-        if (!username || !email || !password) return showMessage("Kullanıcı adı, e-posta ve parola girin", true);
+        if (!username || !email || !password) return showMessage("Kullanıcı adı, e-posta ve parola girin", 'error');
 
         const res = await authFetch('/api/admin/create-user', {
             method: 'POST',
@@ -426,13 +684,13 @@
         });
         const result = await handleResponse(res);
         if (result.ok) {
-            showMessage("Kullanıcı oluşturuldu!");
+            showMessage(`${username} kullanıcısı oluşturuldu ✓`, 'success');
             document.getElementById('new-username').value = '';
             document.getElementById('new-email').value = '';
             document.getElementById('new-password').value = '';
             await loadAdminUsers();
         } else {
-            showMessage(result.message, true);
+            showMessage(result.message, 'error');
         }
     }
 </script>
