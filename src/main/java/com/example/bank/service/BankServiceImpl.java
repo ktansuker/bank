@@ -14,6 +14,8 @@ import org.redisson.api.RedissonClient;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * ÖNEMLİ (@Transactional davranışı):
+ * Her yazma metodu @Transactional ile işaretli. Metot içinde bir
+ * RuntimeException
+ * (örn. BankException) fırlarsa, Spring o metot içinde yapılan TÜM veritabanı
+ * değişikliklerini otomatik geri alır (ROLLBACK) - hiçbir yarım işlem kalıcı
+ * olmaz.
+ * Örneğin transfer() içinde gönderenin bakiyesi düşürülüp receiver bulunamazsa,
+ * gönderenin bakiyesindeki düşüş de commit edilmeden geri alınır.
+ */
 @Service
 public class BankServiceImpl implements BankService {
 
@@ -241,29 +253,29 @@ public class BankServiceImpl implements BankService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "userList")
-    public List<UserDto> listUsers() {
-        return userRepository.findAll().stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+    // Cache anahtarına sayfa numarası ve boyutu da dahil ediliyor - aksi halde
+    // "sayfa 1" için üretilen cache sonucu, "sayfa 2" istendiğinde yanlışlıkla
+    // geri dönebilirdi. allEntries=true ile yapılan evict, her sayfanın cache
+    // kaydını da temizler (BankServiceImpl.createUser bunu tetikliyor).
+    @Cacheable(value = "userList", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
+    public Page<UserDto> listUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(this::convertToDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<TransactionHistoryDto> getHistory(String username) {
+    public Page<TransactionHistoryDto> getHistory(String username, Pageable pageable) {
         User user = findUserOrThrow(username);
-        return historyRepository.findByUserOrderByTimestampDesc(user).stream()
-                .map(this::convertHistoryToDto)
-                .collect(Collectors.toList());
+        return historyRepository.findByUser(user, pageable).map(this::convertHistoryToDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<TransactionHistoryDto> getAllHistory() {
-        return historyRepository.findAllByOrderByTimestampDesc().stream()
-                .map(this::convertHistoryToDto)
-                .collect(Collectors.toList());
+    public Page<TransactionHistoryDto> getAllHistory(Pageable pageable) {
+        return historyRepository.findAll(pageable).map(this::convertHistoryToDto);
     }
+
+    // ---- Alıcı çözümleme: ID / e-posta / kullanıcı adı ----
 
     private User resolveTargetUser(String identifier) {
         if (identifier == null || identifier.isBlank()) {
@@ -271,6 +283,7 @@ public class BankServiceImpl implements BankService {
         }
         String trimmed = identifier.trim();
 
+        // Sayısal ise doğrudan ID olarak dene
         if (trimmed.matches("\\d+")) {
             return userRepository.findById(Long.valueOf(trimmed))
                     .orElseThrow(() -> new BankException("ID ile kullanıcı bulunamadı: " + trimmed));
@@ -287,10 +300,18 @@ public class BankServiceImpl implements BankService {
                 .orElseThrow(() -> new BankException("Kullanıcı bulunamadı: " + trimmed));
     }
 
+    // ---- Redis dağıtık kilit yardımcıları (tekrar eden try/finally burada tek
+    // yerde) ----
+
     private String walletLockKey(String username, Currency currency) {
         return "lock:wallet:" + username + ":" + currency;
     }
 
+    /**
+     * Tek cüzdan kilitleyen işlemler (deposit/withdraw) için ortak akış.
+     * Kilidi alır, action'ı çalıştırır, sonucu döner, HER KOŞULDA (exception dahil)
+     * kilidi bırakır.
+     */
     private <T> T withLock(String key, Supplier<T> action) {
         RLock lock = acquireLock(key);
         try {
@@ -300,6 +321,10 @@ public class BankServiceImpl implements BankService {
         }
     }
 
+    /**
+     * İki cüzdan kilitleyen işlemler (transfer/exchange) için ortak akış.
+     * Deadlock olmasın diye anahtarlar her zaman alfabetik sırayla kilitlenir.
+     */
     private <T> T withTwoLocks(String keyA, String keyB, Supplier<T> action) {
         String firstKey = keyA.compareTo(keyB) <= 0 ? keyA : keyB;
         String secondKey = keyA.compareTo(keyB) <= 0 ? keyB : keyA;
@@ -330,6 +355,7 @@ public class BankServiceImpl implements BankService {
         return lock;
     }
 
+
     private void validateAmount(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BankException("Geçersiz miktar!");
@@ -348,9 +374,9 @@ public class BankServiceImpl implements BankService {
 
     private TransactionHistory logHistory(User user, TransactionType type, Currency currency, BigDecimal amount,
             BigDecimal balanceAfter, String counterparty, String note) {
-        return historyRepository
-                .save(new TransactionHistory(user, type, currency, amount, balanceAfter, counterparty, note));
+        return historyRepository.save(new TransactionHistory(user, type, currency, amount, balanceAfter, counterparty, note));
     }
+                
 
     private UserDto convertToDto(User user) {
         UserDto dto = new UserDto();

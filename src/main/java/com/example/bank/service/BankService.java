@@ -3,8 +3,10 @@ package com.example.bank.service;
 import com.example.bank.dto.TransactionHistoryDto;
 import com.example.bank.dto.UserDto;
 import com.example.bank.entity.Currency;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
-import java.util.List;
 
 public interface BankService {
     UserDto createUser(String username, String email, String password);
@@ -20,9 +22,9 @@ public interface BankService {
 
     UserDto getUserInfo(String username);
 
-    List<UserDto> listUsers();
+    Page<UserDto> listUsers(Pageable pageable);
 
-    List<TransactionHistoryDto> getHistory(String username);
+    Page<TransactionHistoryDto> getHistory(String username, Pageable pageable);
 
-    List<TransactionHistoryDto> getAllHistory();
+    Page<TransactionHistoryDto> getAllHistory(Pageable pageable);
 }
