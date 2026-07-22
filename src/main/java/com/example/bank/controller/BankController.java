@@ -3,18 +3,25 @@ package com.example.bank.controller;
 import com.example.bank.dto.*;
 import com.example.bank.service.BankService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class BankController {
+
+    // Bir istemci yanlışlıkla ya da kötü niyetle size=100000 gibi bir değer
+    // gönderip
+    // tüm veritabanını tek seferde çekmeye çalışamasın diye üst sınır koyuyoruz.
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final BankService bankService;
 
@@ -34,19 +41,26 @@ public class BankController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/create-user")
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
-        return ResponseEntity.ok(bankService.createUser(request.getUsername(), request.getEmail(), request.getPassword()));
+        return ResponseEntity
+                .ok(bankService.createUser(request.getUsername(), request.getEmail(), request.getPassword()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/users")
-    public ResponseEntity<List<UserDto>> listUsers() {
-        return ResponseEntity.ok(bankService.listUsers());
+    public ResponseEntity<PageResponse<UserDto>> listUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, clampSize(size), Sort.by("id").ascending());
+        return ResponseEntity.ok(PageResponse.from(bankService.listUsers(pageable)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/transactions")
-    public ResponseEntity<List<TransactionHistoryDto>> allTransactions() {
-        return ResponseEntity.ok(bankService.getAllHistory());
+    public ResponseEntity<PageResponse<TransactionHistoryDto>> allTransactions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, clampSize(size), Sort.by("timestamp").descending());
+        return ResponseEntity.ok(PageResponse.from(bankService.getAllHistory(pageable)));
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -83,7 +97,17 @@ public class BankController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/user/transactions")
-    public ResponseEntity<List<TransactionHistoryDto>> myTransactions(Principal principal) {
-        return ResponseEntity.ok(bankService.getHistory(principal.getName()));
+    public ResponseEntity<PageResponse<TransactionHistoryDto>> myTransactions(
+            Principal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, clampSize(size), Sort.by("timestamp").descending());
+        return ResponseEntity.ok(PageResponse.from(bankService.getHistory(principal.getName(), pageable)));
+    }
+
+    private int clampSize(int size) {
+        if (size < 1)
+            return 1;
+        return Math.min(size, MAX_PAGE_SIZE);
     }
 }

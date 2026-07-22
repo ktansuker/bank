@@ -184,6 +184,20 @@
         .type-in { color: var(--success); font-weight: 600; }
         .type-out { color: var(--danger); font-weight: 600; }
 
+        .pagination {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 10px; gap: 10px;
+        }
+        .pagination-info { font-size: 12px; color: var(--ink-faint); white-space: nowrap; }
+        .pagination-buttons { display: flex; gap: 6px; }
+        .pagination-buttons button {
+            width: auto; margin-top: 0; padding: 7px 13px; font-size: 12.5px;
+        }
+        .pagination-buttons button:disabled {
+            opacity: 0.4; cursor: not-allowed;
+        }
+        .pagination-buttons button:disabled:hover { background: var(--surface); }
+
         .welcome-line { text-align: center; color: var(--ink-soft); font-size: 14px; margin: 0 0 4px; }
         .welcome-line b { color: var(--ink); }
         .meta-line {
@@ -359,6 +373,7 @@
             <div class="scroll-table">
                 <table class="balance-table" id="user-history"></table>
             </div>
+            <div class="pagination" id="user-history-pagination"></div>
 
             <hr>
             <button class="ghost" onclick="logout()">Çıkış Yap</button>
@@ -385,11 +400,13 @@
 
             <h2>Tüm Kullanıcılar</h2>
             <table class="balance-table" id="admin-users"></table>
+            <div class="pagination" id="admin-users-pagination"></div>
 
             <h2>Tüm İşlemler</h2>
             <div class="scroll-table">
                 <table class="balance-table" id="admin-transactions"></table>
             </div>
+            <div class="pagination" id="admin-transactions-pagination"></div>
 
             <hr>
             <button class="ghost" onclick="logout()">Çıkış Yap</button>
@@ -399,6 +416,36 @@
 
 <script>
     let authHeader = "";
+    const PAGE_SIZE = 10;
+    let userHistoryPage = 0;
+    let adminUsersPage = 0;
+    let adminTransactionsPage = 0;
+
+    // Sunucudan gelen PageResponse (content, page, size, totalElements, totalPages, last)
+    // nesnesini okuyup "Önceki / Sonraki" butonlarını ve sayfa bilgisini çizen ortak fonksiyon.
+    function renderPagination(containerId, pageData, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (pageData.totalElements === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const startItem = pageData.page * pageData.size + 1;
+        const endItem = Math.min(startItem + pageData.content.length - 1, pageData.totalElements);
+
+        container.innerHTML = `
+            <span class="pagination-info">${startItem}-${endItem} / ${pageData.totalElements} kayıt · sayfa ${pageData.page + 1}/${Math.max(pageData.totalPages, 1)}</span>
+            <span class="pagination-buttons">
+                <button class="outline" id="${containerId}-prev" ${pageData.page === 0 ? 'disabled' : ''}>‹ Önceki</button>
+                <button class="outline" id="${containerId}-next" ${pageData.last ? 'disabled' : ''}>Sonraki ›</button>
+            </span>
+        `;
+
+        document.getElementById(`${containerId}-prev`).onclick = () => onPageChange(pageData.page - 1);
+        document.getElementById(`${containerId}-next`).onclick = () => onPageChange(pageData.page + 1);
+    }
 
     // ---- Toast bildirim sistemi ----
     // type: 'success' | 'error' | 'info'
@@ -491,34 +538,26 @@
             reconnectDelay: 4000,
             onConnect: () => {
                 if (currentRole === 'ROLE_ADMIN') {
-                    // Herhangi bir kullanıcı işlem yaptığında admin paneli canlı güncellenir
-                    stompClient.subscribe('/topic/admin/transactions', (msg) => {
-                        prependAdminTransaction(JSON.parse(msg.body));
-                        loadAdminUsers();
+                    // Herhangi bir kullanıcı işlem yaptığında admin paneli canlı güncellenir.
+                    // Elle satır eklemek yerine (pagination toplamları yanlış kalırdı),
+                    // içinde bulunulan sayfayı sunucudan tazeliyoruz - toplam kayıt sayısı,
+                    // sayfa sayısı gibi bilgiler de her zaman doğru kalır.
+                    stompClient.subscribe('/topic/admin/transactions', () => {
+                        loadAdminTransactions(adminTransactionsPage);
+                        loadAdminUsers(adminUsersPage);
                     });
                 } else {
                     // Bakiyem (transfer ile gelen para dahil) anlık güncellenir
                     stompClient.subscribe('/user/queue/balance', (msg) => {
                         const dto = JSON.parse(msg.body);
                         document.getElementById('user-balances').innerHTML = renderBalanceRows(dto.wallets);
-                        loadUserHistory();
+                        loadUserHistory(userHistoryPage);
                         showMessage("Bakiyeniz güncellendi (canlı)", 'info');
                     });
                 }
             }
         });
         stompClient.activate();
-    }
-
-    function prependAdminTransaction(h) {
-        const table = document.getElementById('admin-transactions');
-        if (!table.querySelector('th')) {
-            table.innerHTML = '<tr><th>Tarih</th><th>Kullanıcı</th><th>İşlem</th><th>Miktar</th><th>Detay</th></tr>';
-        }
-        const cls = isIncoming(h.type) ? 'type-in' : 'type-out';
-        const detail = h.counterparty ? h.counterparty : (h.note || '-');
-        const row = `<tr><td>${formatDate(h.timestamp)}</td><td>${h.username}</td><td class="${cls}">${typeLabel(h.type)}</td><td>${h.amount} ${h.currency}</td><td>${detail}</td></tr>`;
-        table.querySelector('tr').insertAdjacentHTML('afterend', row);
     }
 
     function logout() {
@@ -564,17 +603,19 @@
         document.getElementById('user-email-display').textContent = data.email ?? '-';
     }
 
-    async function loadUserHistory() {
-        const res = await authFetch('/api/user/transactions');
+    async function loadUserHistory(page = 0) {
+        userHistoryPage = page;
+        const res = await authFetch(`/api/user/transactions?page=${page}&size=${PAGE_SIZE}`);
         if (!res.ok) return;
-        const history = await res.json();
+        const pageData = await res.json();
         let html = '<tr><th>Tarih</th><th>İşlem</th><th>Miktar</th><th>Detay</th></tr>';
-        history.forEach(h => {
+        pageData.content.forEach(h => {
             const cls = isIncoming(h.type) ? 'type-in' : 'type-out';
             const detail = h.counterparty ? h.counterparty : (h.note || '-');
             html += `<tr><td>${formatDate(h.timestamp)}</td><td class="${cls}">${typeLabel(h.type)}</td><td>${h.amount} ${h.currency}</td><td>${detail}</td></tr>`;
         });
         document.getElementById('user-history').innerHTML = html;
+        renderPagination('user-history-pagination', pageData, loadUserHistory);
     }
 
     async function transaction(type) {
@@ -644,31 +685,35 @@
         }
     }
 
-    async function loadAdminUsers() {
-        const res = await authFetch('/api/admin/users');
+    async function loadAdminUsers(page = 0) {
+        adminUsersPage = page;
+        const res = await authFetch(`/api/admin/users?page=${page}&size=${PAGE_SIZE}`);
         if (!res.ok) return showMessage("Kullanıcı listesi alınamadı", 'error');
-        const users = await res.json();
+        const pageData = await res.json();
 
         let html = '<tr><th>ID</th><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>TRY</th><th>USD</th><th>EUR</th></tr>';
-        users.forEach(u => {
+        pageData.content.forEach(u => {
             const balances = {};
             u.wallets.forEach(w => balances[w.currency] = w.balance);
             html += `<tr><td>${u.id}</td><td>${u.username}</td><td>${u.email ?? '-'}</td><td>${u.role.replace('ROLE_', '')}</td><td>${balances.TRY ?? '-'}</td><td>${balances.USD ?? '-'}</td><td>${balances.EUR ?? '-'}</td></tr>`;
         });
         document.getElementById('admin-users').innerHTML = html;
+        renderPagination('admin-users-pagination', pageData, loadAdminUsers);
     }
 
-    async function loadAdminTransactions() {
-        const res = await authFetch('/api/admin/transactions');
+    async function loadAdminTransactions(page = 0) {
+        adminTransactionsPage = page;
+        const res = await authFetch(`/api/admin/transactions?page=${page}&size=${PAGE_SIZE}`);
         if (!res.ok) return;
-        const history = await res.json();
+        const pageData = await res.json();
         let html = '<tr><th>Tarih</th><th>Kullanıcı</th><th>İşlem</th><th>Miktar</th><th>Detay</th></tr>';
-        history.forEach(h => {
+        pageData.content.forEach(h => {
             const cls = isIncoming(h.type) ? 'type-in' : 'type-out';
             const detail = h.counterparty ? h.counterparty : (h.note || '-');
             html += `<tr><td>${formatDate(h.timestamp)}</td><td>${h.username}</td><td class="${cls}">${typeLabel(h.type)}</td><td>${h.amount} ${h.currency}</td><td>${detail}</td></tr>`;
         });
         document.getElementById('admin-transactions').innerHTML = html;
+        renderPagination('admin-transactions-pagination', pageData, loadAdminTransactions);
     }
 
     async function createUser() {
